@@ -51,6 +51,17 @@ type Block struct {
 	Fields   map[string][]string `json:"fields"`
 	Shadow   bool                `json:"shadow"`
 	TopLevel bool                `json:"topLevel"`
+	Mutation Mutation            `json:"mutation"`
+}
+
+type Mutation struct {
+	TagName          string  `json:"tagName"`
+	Children         []any   `json:"children"`
+	ProcCode         *string `json:"proccode,omitempty"`
+	ArgumentIDs      *string `json:"argumentids,omitempty"`
+	Warp             *string `json:"warp,omitempty"`
+	ArgumentNames    *string `json:"argumentnames,omitempty"`
+	ArgumentDefaults *string `json:"argumentdefaults,omitempty"`
 }
 
 type Comment struct {
