@@ -1,3 +1,3 @@
-module go.grady.link/sv3rn
+module go.grady.link/linc
 
 go 1.24.3
