@@ -47,11 +47,23 @@ type Block struct {
 	Opcode   string              `json:"opcode"`
 	Next     *string             `json:"next,omitempty"`
 	Parent   *string             `json:"parent,omitempty"`
-	Inputs   map[string][]any    `json:"inputs"` // Maps IDs to Arrays representing Inputs. The first element of each array is 1 if the input is a shadow, 2 if there is no shadow, and 3 if there is a shadow but it is obscured by the input. The second is either the ID of the input or an array representing it as described in the table below. If there is an obscured shadow, the third element is its ID or an array representing it.
+	Inputs   map[string]Input    `json:"inputs"` // Maps IDs to Arrays representing Inputs. The first element of each array is 1 if the input is a shadow, 2 if there is no shadow, and 3 if there is a shadow but it is obscured by the input. The second is either the ID of the input or an array representing it as described in the table below. If there is an obscured shadow, the third element is its ID or an array representing it.
 	Fields   map[string][]string `json:"fields"`
 	Shadow   bool                `json:"shadow"`
 	TopLevel bool                `json:"topLevel"`
 	Mutation Mutation            `json:"mutation"`
+}
+
+type Input struct {
+	Type          float64
+	BlockID       *string
+	Value         *any
+	VariableName  *string
+	VariableID    *string
+	VariableX     *float64
+	VariableY     *float64
+	BroadcastName *string
+	BroadcastID   *string
 }
 
 type Mutation struct {
@@ -154,6 +166,52 @@ func (l *List) UnmarshalJSON(data []byte) error {
 		return errors.New("Invalid List: The second element of a list must be an array.")
 	}
 	l.Values = values
+
+	return nil
+}
+
+func (i *Input) UnmarshalJSON(data []byte) error {
+	var arr []any
+	if err := json.Unmarshal(data, &arr); err != nil {
+		return err
+	}
+
+	if len(arr) != 2 {
+		return errors.New("Invalid Variable: Variables must have 2 elements.")
+	}
+
+	inputType, ok := arr[0].(float64)
+	if !ok {
+		return errors.New("Invalid Variable: The first element of a variable must be a string.")
+	}
+	i.Type = inputType
+
+	switch value := arr[1].(type) {
+	case string:
+		i.BlockID = &value
+	case []any:
+		if value[0].(float64) >= 4 && value[0].(float64) <= 10 {
+			i.Value = &value[1]
+			break
+		}
+		if value[0].(float64) == 11 {
+			broadcastName := value[1].(string)
+			broadcastID := value[2].(string)
+			i.BroadcastName = &broadcastName
+			i.BroadcastID = &broadcastID
+			break
+		}
+		variableName := value[1].(string)
+		variableID := value[2].(string)
+		variableX := value[3].(float64)
+		variableY := value[4].(float64)
+		i.VariableName = &variableName
+		i.VariableID = &variableID
+		i.VariableX = &variableX
+		i.VariableY = &variableY
+	default:
+		return errors.New("Invalid Variable: The second element of a variable must be a string or an array.")
+	}
 
 	return nil
 }
