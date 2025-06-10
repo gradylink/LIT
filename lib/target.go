@@ -8,7 +8,7 @@ type Target struct {
 	Events         []Event
 }
 
-type Costume struct {
+type Sprite struct {
 	Target        Target
 	X             float64
 	Y             float64
