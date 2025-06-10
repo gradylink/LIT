@@ -4,5 +4,5 @@ import "sync"
 
 type Event struct {
 	Event  string
-	Method func(wg *sync.WaitGroup, data *any)
+	Method func(render func(), wg *sync.WaitGroup, data *any)
 }
