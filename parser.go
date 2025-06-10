@@ -118,12 +118,12 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 	}
 
 	if len(arr) < 2 || len(arr) > 3 {
-		return errors.New("Invalid Variable: Variables must have 2 or 3 elements.")
+		return errors.New("invalid variable: variables must have 2 or 3 elements")
 	}
 
 	name, ok := arr[0].(string)
 	if !ok {
-		return errors.New("Invalid Variable: The first element of a variable must be a string.")
+		return errors.New("invalid variable: the first element of a variable must be a string")
 	}
 	v.Name = name
 
@@ -131,13 +131,13 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 	case float64, string:
 		v.Value = value
 	default:
-		return errors.New("Invalid Variable: The second element of a variable must be a string or a number.")
+		return errors.New("invalid variable: the second element of a variable must be a string or a number")
 	}
 
 	v.IsCloud = false
 	if len(arr) == 3 {
 		if cloud, ok := arr[2].(bool); !ok || !cloud {
-			return errors.New("Invalid Variable: If it exists, the third element of a variable must be true.")
+			return errors.New("invalid variable: if it exists, the third element of a variable must be true")
 		}
 		v.IsCloud = true
 	}
@@ -152,18 +152,18 @@ func (l *List) UnmarshalJSON(data []byte) error {
 	}
 
 	if len(arr) != 2 {
-		return errors.New("Invalid List: Lists must have 2 elements.")
+		return errors.New("invalid list: lists must have 2 elements")
 	}
 
 	name, ok := arr[0].(string)
 	if !ok {
-		return errors.New("Invalid List: The first element of a list must be a string.")
+		return errors.New("invalid list: the first element of a list must be a string")
 	}
 	l.Name = name
 
 	values, ok := arr[1].([]any)
 	if !ok {
-		return errors.New("Invalid List: The second element of a list must be an array.")
+		return errors.New("invalid list: the second element of a list must be an array")
 	}
 	l.Values = values
 
@@ -177,12 +177,12 @@ func (i *Input) UnmarshalJSON(data []byte) error {
 	}
 
 	if len(arr) != 2 {
-		return errors.New("Invalid Variable: Variables must have 2 elements.")
+		return errors.New("invalid variable: variables must have 2 elements")
 	}
 
 	inputType, ok := arr[0].(float64)
 	if !ok {
-		return errors.New("Invalid Variable: The first element of a variable must be a string.")
+		return errors.New("invalid variable: the first element of a variable must be a string")
 	}
 	i.Type = inputType
 
@@ -210,7 +210,7 @@ func (i *Input) UnmarshalJSON(data []byte) error {
 		i.VariableX = &variableX
 		i.VariableY = &variableY
 	default:
-		return errors.New("Invalid Variable: The second element of a variable must be a string or an array.")
+		return errors.New("invalid variable: the second element of a variable must be a string or an array")
 	}
 
 	return nil
