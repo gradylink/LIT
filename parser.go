@@ -19,10 +19,10 @@ type Target struct {
 	Sounds               []Asset             `json:"sounds"`
 	LayerOrder           float64             `json:"layerOrder"`
 	Volume               float64             `json:"volume"`
-	Tempo                *float64            `json:"tempo,omitempty"`                // Only present if IsStage == true.
-	VideoState           *string             `json:"videoState,omitempty"`           // Either "on", "off", or "on-flipped". Only present if IsStage == true.
-	VideoTransparency    *float64            `json:"videoTransparency,omitempty"`    // Only present if IsStage == true.
-	TextToSpeechLanguage *string             `json:"textToSpeechLanguage,omitempty"` // Only present if IsStage == true.
+	Tempo                float64             `json:"tempo,omitempty"`                // Only present if IsStage == true.
+	VideoState           string              `json:"videoState,omitempty"`           // Either "on", "off", or "on-flipped". Only present if IsStage == true.
+	VideoTransparency    float64             `json:"videoTransparency,omitempty"`    // Only present if IsStage == true.
+	TextToSpeechLanguage string              `json:"textToSpeechLanguage,omitempty"` // Only present if IsStage == true.
 	Visible              bool                `json:"visible"`                        // Only present if IsStage == false.
 	X                    float64             `json:"x"`                              // Only present if IsStage == false.
 	Y                    float64             `json:"y"`                              // Only present if IsStage == false.
@@ -60,8 +60,6 @@ type Input struct {
 	Value         *any
 	VariableName  *string
 	VariableID    *string
-	VariableX     *float64
-	VariableY     *float64
 	BroadcastName *string
 	BroadcastID   *string
 }
@@ -176,13 +174,13 @@ func (i *Input) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if len(arr) != 2 {
-		return errors.New("invalid variable: variables must have 2 elements")
+	if len(arr) < 2 || len(arr) > 3 {
+		return errors.New("invalid input: inputs must have 2 or 3 elements")
 	}
 
 	inputType, ok := arr[0].(float64)
 	if !ok {
-		return errors.New("invalid variable: the first element of a variable must be a string")
+		return errors.New("invalid input: the first element of a input must be a number")
 	}
 	i.Type = inputType
 
@@ -203,12 +201,8 @@ func (i *Input) UnmarshalJSON(data []byte) error {
 		}
 		variableName := value[1].(string)
 		variableID := value[2].(string)
-		variableX := value[3].(float64)
-		variableY := value[4].(float64)
 		i.VariableName = &variableName
 		i.VariableID = &variableID
-		i.VariableX = &variableX
-		i.VariableY = &variableY
 	default:
 		return errors.New("invalid variable: the second element of a variable must be a string or an array")
 	}
