@@ -1,13 +1,107 @@
 package main
 
 import (
+	"archive/zip"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/spf13/pflag"
 )
 
 func main() {
-	project, err := Parse("./test-extracted/project.json")
+	input := pflag.StringP("input", "i", "", "The Scratch project to transpile.")
+	output := pflag.StringP("output", "o", "output.go", "The file to put the transpiled project.")
+	projectId := pflag.Int("project-id", 0, "The URL of a Scratch project to transpile.")
+
+	pflag.Parse()
+
+	if !pflag.Lookup("input").Changed && !pflag.Lookup("project-id").Changed {
+		fmt.Fprintln(os.Stderr, "Error: either --input (-i) or --project-id must be present.")
+		pflag.Usage()
+		os.Exit(1)
+	}
+	if pflag.Lookup("input").Changed {
+		if _, err := os.Stat(*input); errors.Is(err, os.ErrNotExist) {
+			fmt.Fprintf(os.Stderr, "Error: %s does not exist.\n", *input)
+			pflag.Usage()
+			os.Exit(1)
+		} else if err != nil {
+			panic(err)
+		}
+	} else {
+		resp, err := http.Get(fmt.Sprintf("https://api.scratch.mit.edu/projects/%d", *projectId))
+		if err != nil {
+			panic(err)
+		}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			panic(err)
+		}
+		var projectData map[string]any
+		err = json.Unmarshal(body, &projectData)
+		if err != nil {
+			panic(err)
+		}
+		resp.Body.Close()
+
+		f, err := os.CreateTemp("", "*.sb3")
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
+		resp, err = http.Get(fmt.Sprintf("https://projects.scratch.mit.edu/%d?token=%s", *projectId, projectData["project_token"]))
+		if err != nil {
+			panic(err)
+		}
+		if _, err = io.Copy(f, resp.Body); err != nil {
+			panic(err)
+		}
+		resp.Body.Close()
+		*input = f.Name()
+	}
+
+	// Extract SB3
+	reader, err := zip.OpenReader(*input)
+	if err != nil {
+		panic(err)
+	}
+	extractPath, err := os.MkdirTemp("", "sb3-")
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range reader.File {
+		if f.FileInfo().IsDir() {
+			if err := os.MkdirAll(filepath.Join(extractPath, f.Name), os.ModePerm); err != nil {
+				panic(err)
+			}
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(extractPath, f.Name)), os.ModePerm); err != nil {
+			panic(err)
+		}
+		extractedFile, err := os.OpenFile(filepath.Join(extractPath, f.Name), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			panic(err)
+		}
+		defer extractedFile.Close()
+		zippedFile, err := f.Open()
+		if err != nil {
+			panic(err)
+		}
+		defer zippedFile.Close()
+		if _, err := io.Copy(extractedFile, zippedFile); err != nil {
+			panic(err)
+		}
+	}
+
+	project, err := Parse(filepath.Join(extractPath, "project.json"))
 	if err != nil {
 		panic(err)
 	}
@@ -115,7 +209,7 @@ func main() {
 		),
 	)
 
-	if err = f.Save("dist/main.go"); err != nil {
+	if err = f.Save(*output); err != nil {
 		panic(err)
 	}
 }
