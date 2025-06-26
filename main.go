@@ -112,6 +112,7 @@ func main() {
 	f.Type().Id("Block").Struct(
 		jen.Id("Opcode").String(),
 		jen.Id("Blocks").Index().Id("Block"),
+		jen.Id("CurrentBlock").Uint64(),
 		jen.Id("Callback").Func().Params(jen.Id("t").Op("*").Id("Target")).Params(jen.Bool()),
 	).Line()
 	f.Type().Id("Stack").Struct(
@@ -131,7 +132,7 @@ func main() {
 		jen.Id("X").Float64(),
 		jen.Id("Y").Float64(),
 		jen.Id("Size").Uint8(),
-		jen.Id("Direction").Int16(),
+		jen.Id("Direction").Float64(),
 		jen.Id("RotationStyle").String(),
 		jen.Id("Stacks").Index().Id("Stack"),
 	).Line()
